@@ -79,7 +79,8 @@ end
 function getModelFromHash(hash)
     return hashModelMap[hash]
 end
-
+------------------------------------------------------------
+--- Original
 function isValidVehicle(vehicle)
     local vehicleHash = GetEntityModel(vehicle)
     local vehicleModel = getModelFromHash(vehicleHash)
@@ -128,6 +129,113 @@ function updateVehicleMode(vehicle)
     currentVehicleMode = Config.VehicleModes[gear]
 end
 
+--- Original
+----------------------------------------------------------------
+------------------------------------------------------------
+--- Category2
+function isValidVehicleCat2(vehicle)
+    local vehicleHash = GetEntityModel(vehicle)
+    local vehicleModel = getModelFromHash(vehicleHash)
+    return Config.VehiclesConfigCat2[vehicleModel]
+end
+
+local function getHandlingConfigCat2(vehicleHash)
+    local vehicleModel = getModelFromHash(vehicleHash)
+    if Config.VehiclesConfigCat2[vehicleModel] then
+        return Config.VehiclesConfigCat2[vehicleModel][currentVehicleMode]
+    end
+end
+
+function updateHandlingCat2(vehicle)
+    local handlingConfig = getHandlingConfigCat2(GetEntityModel(vehicle))
+    for k, v in pairs(handlingConfig) do
+        if math.type(v) == 'float' then
+            SetVehicleHandlingFloat(vehicle, "CHandlingData", k, v)
+        elseif math.type(v) == 'integer' then
+            SetVehicleHandlingInt(vehicle, "CHandlingData", k, v)
+        elseif type(v) == 'vector3' then
+            SetVehicleHandlingVector(vehicle, "CHandlingData", k, v)
+        end
+    end
+    fixVehicleHandling(vehicle)
+end
+
+function applyVehicleModsCat2(vehicle)
+    local vehicleMode = Config.VehicleModesCat2[gear]
+
+    ToggleVehicleMod(vehicle, 18, Config["VehicleModifications"][vehicleMode]["Turbo"]) -- Turbo
+    ToggleVehicleMod(vehicle, 22, Config["VehicleModifications"][vehicleMode]["XenonHeadlights"]) -- Xenon Headlights
+    SetVehicleMod(vehicle, 11, Config["VehicleModifications"][vehicleMode]["Engine"], false) -- Engine
+    SetVehicleMod(vehicle, 12, Config["VehicleModifications"][vehicleMode]["Brakes"], false) -- Brakes
+    SetVehicleMod(vehicle, 13, Config["VehicleModifications"][vehicleMode]["Transmission"], false) -- Transmission
+    SetVehicleXenonLightsColour(vehicle, Config["VehicleModifications"][vehicleMode]["XenonHeadlightsColor"]) -- Xenon Headlights Color
+
+end
+
+function updateVehicleModeCat2(vehicle)
+    gear = gear % #Config.VehicleModesCat2 + 1
+    if vehicle ~= currentVehicle then
+        gear = 1
+    end
+    currentVehicle = vehicle
+    currentVehicleMode = Config.VehicleModesCat2[gear]
+end
+
+--- Category2
+----------------------------------------------------------------
+------------------------------------------------------------
+--- Category3
+function isValidVehicleCat3(vehicle)
+    local vehicleHash = GetEntityModel(vehicle)
+    local vehicleModel = getModelFromHash(vehicleHash)
+    return Config.VehiclesConfigCat3[vehicleModel]
+end
+
+local function getHandlingConfigCat3(vehicleHash)
+    local vehicleModel = getModelFromHash(vehicleHash)
+    if Config.VehiclesConfigCat3[vehicleModel] then
+        return Config.VehiclesConfigCat3[vehicleModel][currentVehicleMode]
+    end
+end
+
+function updateHandlingCat3(vehicle)
+    local handlingConfig = getHandlingConfigCat3(GetEntityModel(vehicle))
+    for k, v in pairs(handlingConfig) do
+        if math.type(v) == 'float' then
+            SetVehicleHandlingFloat(vehicle, "CHandlingData", k, v)
+        elseif math.type(v) == 'integer' then
+            SetVehicleHandlingInt(vehicle, "CHandlingData", k, v)
+        elseif type(v) == 'vector3' then
+            SetVehicleHandlingVector(vehicle, "CHandlingData", k, v)
+        end
+    end
+    fixVehicleHandling(vehicle)
+end
+
+function applyVehicleModsCat3(vehicle)
+    local vehicleMode = Config.VehicleModesCat3[gear]
+
+    ToggleVehicleMod(vehicle, 18, Config["VehicleModifications"][vehicleMode]["Turbo"]) -- Turbo
+    ToggleVehicleMod(vehicle, 22, Config["VehicleModifications"][vehicleMode]["XenonHeadlights"]) -- Xenon Headlights
+    SetVehicleMod(vehicle, 11, Config["VehicleModifications"][vehicleMode]["Engine"], false) -- Engine
+    SetVehicleMod(vehicle, 12, Config["VehicleModifications"][vehicleMode]["Brakes"], false) -- Brakes
+    SetVehicleMod(vehicle, 13, Config["VehicleModifications"][vehicleMode]["Transmission"], false) -- Transmission
+    SetVehicleXenonLightsColour(vehicle, Config["VehicleModifications"][vehicleMode]["XenonHeadlightsColor"]) -- Xenon Headlights Color
+
+end
+
+function updateVehicleModeCat3(vehicle)
+    gear = gear % #Config.VehicleModesCat3 + 1
+    if vehicle ~= currentVehicle then
+        gear = 1
+    end
+    currentVehicle = vehicle
+    currentVehicleMode = Config.VehicleModesCat3[gear]
+end
+
+--- Category3
+----------------------------------------------------------------
+
 function updatePlayerInfo()
     if Config.framework == 'qbcore' then
         local playerData = QBCore.Functions.GetPlayerData()
@@ -163,6 +271,7 @@ AddEventHandler('an-pursuitmode:client:updateVehicleMode', function()
     local ped = PlayerPedId()
     if IsPedInAnyVehicle(ped, false) then
         local vehicle = GetVehiclePedIsIn(ped)
+
         if DoesEntityExist(vehicle) and isValidVehicle(vehicle) and isAuthorizedToSwitchMode() then
             updateVehicleMode(vehicle)
             updateHandling(vehicle)
@@ -177,6 +286,36 @@ AddEventHandler('an-pursuitmode:client:updateVehicleMode', function()
                     duration = 1000,
                 })
             end
+        elseif DoesEntityExist(vehicle) and isValidVehicleCat2(vehicle) and isAuthorizedToSwitchModeCat2() then
+            updateVehicleModeCat2(vehicle)
+            updateHandlingCat2(vehicle)
+            applyVehicleModsCat2(vehicle)
+            if Config.framework == 'qbcore' then
+                QBCore.Functions.Notify((Config.Notification):format(currentVehicleMode))
+            elseif Config.framework == 'esx' then
+                lib.notify({
+                    title = 'success',
+                    description = (Config.Notification):format(currentVehicleMode),
+                    type = 'success',
+                    duration = 1000,
+                })
+            end
+
+        elseif DoesEntityExist(vehicle) and isValidVehicleCat3(vehicle) and isAuthorizedToSwitchModeCat3() then
+            updateVehicleModeCat3(vehicle)
+            updateHandlingCat3(vehicle)
+            applyVehicleModsCat3(vehicle)
+            if Config.framework == 'qbcore' then
+                QBCore.Functions.Notify((Config.Notification):format(currentVehicleMode))
+            elseif Config.framework == 'esx' then
+                lib.notify({
+                    title = 'success',
+                    description = (Config.Notification):format(currentVehicleMode),
+                    type = 'success',
+                    duration = 1000,
+                })
+            end
+
         end
     end
 end)

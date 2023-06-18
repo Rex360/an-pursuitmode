@@ -1,4 +1,5 @@
 # an-pursuitmode
+# an-pursuitmode modified to support 3 different vehicle modes
 
 Originally from https://github.com/JonasDev99/qb-pursuitmode/
 
